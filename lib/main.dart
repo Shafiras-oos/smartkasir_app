@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 // [PERUBAHAN TAHAP 7.5]: Tambahkan impor halaman Splash Screen
-import 'splash_screen_page.dart';
+import 'pages/splash_screen_page.dart';
 
 // Fungsi utama (entry point) aplikasi
 void main() {
