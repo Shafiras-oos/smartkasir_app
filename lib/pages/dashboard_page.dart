@@ -8,7 +8,7 @@ import '../models/produk.dart';
 import '../helpers/database_helper.dart';
 import 'form_produk_page.dart';
 
-// Halaman Beranda & Katalog Kasir SmartKasir
+// Halaman Tab 0: Beranda & Katalog Kasir SmartKasir
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -19,7 +19,13 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   // Indeks kategori aktif terpilih
   int _kategoriTerpilih = 0;
-  final List<String> _kategoriList = ['Semua', 'Makanan', 'Minuman', 'Snack'];
+  final List<String> _kategoriList = [
+    'Semua',
+    'Makanan',
+    'Minuman',
+    'Snack',
+    'Dessert',
+  ];
 
   // Variabel penampung hasil asinkron basis data SQLite
   late Future<List<Produk>> _produkFuture;
@@ -55,12 +61,10 @@ class _DashboardPageState extends State<DashboardPage> {
   void _muatDataProduk() {
     setState(() {
       if (_keywordPencarian.trim().isNotEmpty) {
-        // KONTROL PERCABANGAN: Jika ada pencarian, gunakan searchProduk (SQL LIKE)
         _produkFuture = DatabaseHelper.instance.searchProduk(
           _keywordPencarian.trim(),
         );
       } else {
-        // Jika tidak mencari, filter berdasarkan kategori
         _produkFuture = DatabaseHelper.instance.getProdukByKategori(
           _kategoriList[_kategoriTerpilih],
         );
@@ -92,12 +96,13 @@ class _DashboardPageState extends State<DashboardPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx); // Tutup dialog modal
               // Eksekusi DELETE ke SQLite
               await DatabaseHelper.instance.deleteProduk(item.id!);
 
               if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text(
                     'Produk "${item.nama}" berhasil dihapus dari database!',
@@ -116,215 +121,214 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // Helper pembuat badge stok indikator
-  Widget _buildBadgeStok(int stok) {
-    Color warnaLatar;
-    Color warnaTeks;
-    String label;
-
-    if (stok == 0) {
-      warnaLatar = Colors.red.shade100;
-      warnaTeks = Colors.red.shade900;
-      label = 'Habis';
-    } else if (stok <= 5) {
-      warnaLatar = Colors.amber.shade100;
-      warnaTeks = Colors.amber.shade900;
-      label = 'Sisa $stok';
-    } else {
-      warnaLatar = Colors.green.shade100;
-      warnaTeks = Colors.green.shade900;
-      label = 'Stok $stok';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: warnaLatar,
-        borderRadius: BorderRadius.circular(6),
+  //--- MODAL DETAIL & AKSI PRODUK KETIKA KARTU DI-KLIK
+  void _tampilkanDetailProduk(BuildContext context, Produk item) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: warnaTeks,
-        ),
-      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        item.gambarUrl,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 60,
+                          height: 60,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.fastfood, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.nama,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Kategori: ${item.kategori} | Stok: ${item.stok}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatRupiah(item.hargaJual),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0EA5E9),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0EA5E9),
+                          side: const BorderSide(color: Color(0xFF0EA5E9)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final refresh = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FormProdukPage(produk: item),
+                            ),
+                          );
+                          if (refresh == true) _muatDataProduk();
+                        },
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Edit Produk'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade600,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _konfirmasiHapusProduk(context, item);
+                        },
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Hapus Produk'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  // Helper pembuat kartu produk di dalam Grid
+  // Helper pembuat kartu produk di dalam Grid (Tab Beranda)
   Widget _buildProductCard(Produk item) {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1,
-        ), // Garis pembatas halus
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
-              alpha: 0.08,
-            ), // Elevasi bayangan lebih tegas
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 8,
             spreadRadius: 1,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. FOTO PRODUK (TINGGI 105 SERAGAM)
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Stack(
-              children: [
-                Image.network(
-                  item.gambarUrl,
-                  height: 105,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 105,
-                    color: Colors.grey.shade200,
-                    child: const Icon(
-                      Icons.fastfood,
-                      size: 36,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
-                // Badge diskon promo
-                if (item.diskonPersen > 0)
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'PROMO ${item.diskonPersen}%',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _tampilkanDetailProduk(context, item),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. FOTO PRODUK DENGAN BADGE PROMO
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      item.gambarUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(
+                          Icons.fastfood,
+                          size: 36,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
-          // 2. DESKRIPSI & HARGA PRODUK (RAPAT & PROPORSIONAL)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+                    // Badge diskon promo jika ada (misal: PROMO 20%)
+                    if (item.diskonPersen > 0)
+                      Positioned(
+                        top: 6,
+                        left: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'PROMO ${item.diskonPersen}%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // 2. LABEL NAMA PRODUK DI BAGIAN BAWAH KARTU
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                color: Colors.white,
+                child: Text(
                   item.nama,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                    color: Color(0xFF1E293B),
                   ),
                 ),
-                const SizedBox(height: 3),
-                _buildBadgeStok(item.stok),
-                const SizedBox(height: 3),
-                Text(
-                  _formatRupiah(item.hargaJual),
-                  style: const TextStyle(
-                    color: Color(0xFF1E3A8A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          // 3. BARIS TOMBOL AKSI CRUD (EDIT, HAPUS, & TAMBAH KE CART)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(12),
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Tombol Edit Produk (Ikon Pensil)
-                IconButton(
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    size: 18,
-                    color: Color(0xFF1E3A8A),
-                  ),
-                  tooltip: 'Edit Produk',
-                  padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                  onPressed: () async {
-                    // Navigasi ke Form Edit dengan membawa objek produk
-                    final refresh = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FormProdukPage(produk: item),
-                      ),
-                    );
-                    if (refresh == true) _muatDataProduk();
-                  },
-                ),
-                // Tombol Hapus Produk (Ikon Tempat Sampah)
-                IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    size: 18,
-                    color: Colors.red,
-                  ),
-                  tooltip: 'Hapus Produk',
-                  padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                  onPressed: () => _konfirmasiHapusProduk(context, item),
-                ),
-                // Tombol Tambah ke Keranjang Kasir
-                IconButton(
-                  icon: const Icon(
-                    Icons.add_shopping_cart,
-                    size: 18,
-                    color: Color(0xFF1E3A8A),
-                  ),
-                  tooltip: 'Tambah ke Kasir',
-                  padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${item.nama} dipilih untuk transaksi kasir',
-                        ),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -335,22 +339,26 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.point_of_sale, color: Color(0xFFFBBF24)),
+            Icon(Icons.point_of_sale_rounded, color: Colors.white, size: 24),
             SizedBox(width: 8),
             Text(
               'SmartKasir',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
                 color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
               ),
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF1E3A8A),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: const Color(0xFF0EA5E9), // Biru Muda / Sky Blue
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+            icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 26),
             tooltip: 'Tambah Produk Baru',
             onPressed: () async {
               final refresh = await Navigator.push(
@@ -364,35 +372,45 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       body: Column(
         children: [
-          // 1. BANNER TOTAL TRANSAKSI HARIAN
+          // 1. BANNER TOTAL PENJUALAN HARI INI
           Container(
             width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                colors: [Color(0xFF38BDF8), Color(0xFF0EA5E9)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF0EA5E9).withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Total Penjualan Hari Ini',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 13,
+                      ),
                     ),
-                    SizedBox(height: 4),
-                    Text(
+                    const SizedBox(height: 4),
+                    const Text(
                       'Rp 845.000',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -400,22 +418,22 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 14,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Row(
                     children: [
                       Icon(Icons.receipt_long, color: Colors.white, size: 16),
-                      SizedBox(width: 4),
+                      SizedBox(width: 6),
                       Text(
                         '34 Transaksi',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -426,7 +444,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
 
-          // 2. KOTAK PENCARIAN CEPAT (SQL LIKE)
+          // 2. KOTAK PENCARIAN CEPAT DENGAN IKON BIRU MUDA
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
@@ -437,7 +455,8 @@ class _DashboardPageState extends State<DashboardPage> {
               },
               decoration: InputDecoration(
                 hintText: 'Cari nama produk kasir ...',
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF1E3A8A)),
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF0EA5E9)),
                 suffixIcon: _keywordPencarian.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, size: 18),
@@ -451,23 +470,30 @@ class _DashboardPageState extends State<DashboardPage> {
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
+                  vertical: 12,
                   horizontal: 16,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF0EA5E9),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 12),
 
-          // 3. FILTER CHIP HORIZONTAL KATEGORI
+          // 3. FILTER CHIP HORIZONTAL KATEGORI DENGAN CENTANG PUTIH AKTIF
           SizedBox(
             height: 38,
             child: ListView.builder(
@@ -479,16 +505,28 @@ class _DashboardPageState extends State<DashboardPage> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
+                    avatar: isSelected
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : null,
+                    showCheckmark: false,
                     label: Text(_kategoriList[index]),
                     selected: isSelected,
-                    selectedColor: const Color(0xFF1E3A8A),
+                    selectedColor: const Color(0xFF0EA5E9),
                     backgroundColor: Colors.white,
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF0EA5E9)
+                          : Colors.grey.shade300,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : Colors.black87,
                       fontWeight: isSelected
                           ? FontWeight.bold
                           : FontWeight.normal,
-                      fontSize: 12,
+                      fontSize: 13,
                     ),
                     onSelected: (selected) {
                       if (selected) {
@@ -507,17 +545,19 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           const SizedBox(height: 12),
 
-          // 4. DAFTAR KATALOG DENGAN FUTUREBUILDER (DATA PERSISTENSI SQLITE)
+          // 4. DAFTAR KATALOG DENGAN GRID RESPONSIVE (5 KOLOM DI LAYAR DESKTOP / BROWSER)
           Expanded(
             child: FutureBuilder<List<Produk>>(
               future: _produkFuture,
               builder: (context, snapshot) {
-                // KONDISI 1: Sedang memuat data (Loading State)
+                // KONDISI 1: Loading State
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF0EA5E9)),
+                  );
                 }
 
-                // KONDISI 2: Terjadi kesalahan (Error State)
+                // KONDISI 2: Error State
                 if (snapshot.hasError) {
                   return Center(
                     child: Padding(
@@ -557,37 +597,37 @@ class _DashboardPageState extends State<DashboardPage> {
                   );
                 }
 
-                // KONDISI 4: Data Berhasil Dimuat (Success State)
-                return GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisExtent: 220, // Kunci tinggi kartu tetap
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: daftarProduk.length,
-                  itemBuilder: (context, index) {
-                    return _buildProductCard(daftarProduk[index]);
+                // KONDISI 4: Success State (5 kolom saat lebar > 850px)
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount = 2;
+                    if (constraints.maxWidth > 850) {
+                      crossAxisCount = 5;
+                    } else if (constraints.maxWidth > 650) {
+                      crossAxisCount = 4;
+                    } else if (constraints.maxWidth > 450) {
+                      crossAxisCount = 3;
+                    }
+
+                    return GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisExtent: 175,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                      ),
+                      itemCount: daftarProduk.length,
+                      itemBuilder: (context, index) {
+                        return _buildProductCard(daftarProduk[index]);
+                      },
+                    );
                   },
                 );
               },
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final refresh = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const FormProdukPage()),
-          );
-          if (refresh == true) _muatDataProduk();
-        },
-        backgroundColor: const Color(0xFF1E3A8A),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah Produk'),
       ),
     );
   }

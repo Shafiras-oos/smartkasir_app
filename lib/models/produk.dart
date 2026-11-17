@@ -105,7 +105,8 @@ kategori: 'Makanan',
 hargaBeli: 8000,
 hargaJual: 15000,
 stok: 5,
-gambarUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500', // URL Placeholder
+gambarUrl: 'https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?w=500',
+diskonPersen: 20,
 ),
 const Produk(
 kodeProduk: 'PRD-003',
@@ -142,6 +143,6 @@ kategori: 'Snack',
 hargaBeli: 7000,
 hargaJual: 14000,
 stok: 8,
-gambarUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500', // URL Placeholder
+gambarUrl: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500',
 ),
 ];

@@ -2,8 +2,8 @@
 import 'dart:async'; 
 // Mengimpor pustaka antarmuka Material Design utama Flutter 
 import 'package:flutter/material.dart'; 
-// Mengimpor halaman utama (sesuaikan dengan file tujuan Anda, misalnya main.dart atau dashboard_page.dart) 
-import 'dashboard_page.dart'; 
+// Mengimpor halaman navigasi utama 4 tab (Modul M12)
+import 'main_navigation_page.dart'; 
  
 // Komponen/Widget SplashScreenPage turunan StatefulWidget: Mengelola status timer hitung mundur 
 class SplashScreenPage extends StatefulWidget { 
@@ -55,7 +55,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
         // agar pengguna tidak dapat menekan tombol kembali (Back) untuk kembali ke Splash Screen 
         Navigator.pushReplacement( 
           context, 
-          MaterialPageRoute(builder: (context) => const DashboardPage()), 
+          MaterialPageRoute(builder: (context) => const MainNavigationPage()), 
         ); 
       } 
     }); 
@@ -74,7 +74,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
   Widget build(BuildContext context) { 
     // Komponen/Widget Scaffold: Layar penuh dengan latar belakang warna biru navy seragam kasir 
     return Scaffold( 
-      backgroundColor: const Color(0xFF1E3A8A),    // Deklarasi warna latar belakang: Biru Navy Elegan 
+      backgroundColor: const Color(0xFF0EA5E9),    // Deklarasi warna latar belakang: Biru Muda Cerah 
       // Komponen/Widget Center: Memposisikan seluruh komponen tepat di tengah layar secara vertikal & horizontal 
       body: Center( 
         // Komponen/Widget Column: Menyusun logo, judul, indikator putar, dan timer secara vertikal 
@@ -92,7 +92,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
                 shape: BoxShape.circle,             // Bentuk wadah bulat/lingkaran sempurna 
                 boxShadow: [ 
                   BoxShadow( 
-                    color: Colors.black.withOpacity(0.2), // Bayangan hitam semi-transparan 
+                    color: Colors.black.withValues(alpha: 0.2), // Bayangan hitam semi-transparan 
                     blurRadius: 15, 
                     offset: const Offset(0, 5), 
                   ), 
@@ -102,7 +102,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
               child: const Icon( 
                 Icons.point_of_sale_rounded, 
                 size: 72, 
-                color: Color(0xFF1E3A8A),           // Warna ikon serasi dengan warna tema (Biru Navy) 
+                color: Color(0xFF0EA5E9),           // Warna ikon serasi dengan warna tema (Biru Muda) 
               ), 
             ), 
             const SizedBox(height: 24),             // Jarak pemisah vertikal 24 piksel 

@@ -1,7 +1,7 @@
 // Mengimpor pustaka antarmuka Material Design utama dari framework Flutter
 import 'package:flutter/material.dart';
 
-// [PERUBAHAN TAHAP 7.5]: Tambahkan impor halaman Splash Screen
+// Impor halaman Splash Screen
 import 'pages/splash_screen_page.dart';
 
 // Fungsi utama (entry point) aplikasi
@@ -21,17 +21,18 @@ class SmartKasirApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E3A8A), // Biru Navy Profesional Bisnis
+          seedColor: const Color(0xFF0EA5E9), // Biru Muda / Sky Blue Segar & Modern
+          primary: const Color(0xFF0EA5E9),
           brightness: Brightness.light,
         ),
         appBarTheme: const AppBarTheme(
           centerTitle: true,
-          elevation: 2,
-          backgroundColor: Color(0xFF1E3A8A),
+          elevation: 0,
+          backgroundColor: Color(0xFF0EA5E9),
           foregroundColor: Colors.white,
         ),
       ),
-      // [PERUBAHAN TAHAP 7.5]: Titik awal aplikasi dibuka pertama kali melalui SplashScreenPage()
+      // Titik awal aplikasi dibuka pertama kali melalui SplashScreenPage()
       home: const SplashScreenPage(),
     );
   }
