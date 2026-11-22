@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Mengimpor halaman kelola karyawan untuk jalan pintas menu
 import 'kelola_karyawan_page.dart';
+import 'kelola_pelanggan_page.dart';
+import '../helpers/database_helper.dart';
 
 // Halaman Pengaturan Profil Toko & Footer Struk Kasir
 class ProfilTokoPage extends StatefulWidget {
@@ -28,6 +30,9 @@ class _ProfilTokoPageState extends State<ProfilTokoPage> {
   // Nama kasir aktif yang sedang bertugas
   String _activeCashierName = 'Belum Ditentukan';
 
+  // Total pelanggan terdaftar (Tantangan 3)
+  int _totalPelanggan = 0;
+
   @override
   void initState() {
     super.initState();
@@ -47,7 +52,9 @@ class _ProfilTokoPageState extends State<ProfilTokoPage> {
   // --- MEMBACA PENGATURAN TOKO DARI SHAREDPREFERENCES ---
   Future<void> _muatProfilToko() async {
     final prefs = await SharedPreferences.getInstance();
+    final countPelanggan = await DatabaseHelper.instance.countPelanggan();
     setState(() {
+      _totalPelanggan = countPelanggan;
       _namaTokoController.text =
           prefs.getString('nama_toko') ?? 'SmartKasir Poliban';
       _alamatController.text =
@@ -188,6 +195,62 @@ class _ProfilTokoPageState extends State<ProfilTokoPage> {
                     label: const Text('Kelola'),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // MENU MANAJEMEN DATA PELANGGAN & MEMBER (MODUL M13 + TANTANGAN 3)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFBAE6FD)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                leading: const CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Color(0xFF0EA5E9),
+                  child: Icon(Icons.people_alt, color: Colors.white, size: 20),
+                ),
+                title: const Text(
+                  'Data Pelanggan & Lokasi GPS',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                subtitle: Text(
+                  '$_totalPelanggan Member Pelanggan Terdaftar',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFF0EA5E9),
+                ),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KelolaPelangganPage(),
+                    ),
+                  );
+                  _muatProfilToko();
+                },
               ),
             ),
             const SizedBox(height: 20),

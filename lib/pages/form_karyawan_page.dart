@@ -216,7 +216,7 @@ class _FormKaryawanPageState extends State<FormKaryawanPage> {
 
               // 3. DROPDOWN PERAN / JABATAN (TERMASUK SUPERVISOR DARI TANTANGAN 1)
               DropdownButtonFormField<String>(
-                value: _peranTerpilih,
+                initialValue: _peranTerpilih,
                 decoration: InputDecoration(
                   labelText: 'Peran / Jabatan Toko',
                   prefixIcon: const Icon(Icons.work_outline, color: Color(0xFF0EA5E9)),

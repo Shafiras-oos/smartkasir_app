@@ -226,7 +226,7 @@ class _FormProdukPageState extends State<FormProdukPage> {
               const SizedBox(height: 16),
               // 3. DROPDOWN KATEGORI PRODUK
               DropdownButtonFormField<String>(
-                value: _kategoriTerpilih,
+                initialValue: _kategoriTerpilih,
                 decoration: InputDecoration(
                   labelText: 'Kelompok Kategori',
                   prefixIcon: const Icon(Icons.category_outlined),
